@@ -3,111 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Message Board</title>
+    <title>Message Board</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #f4f4f4;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            margin: 20px;
+            text-align: center;
         }
-        h1 {
-            color: #333;
-        }
-        #messages {
-            margin-bottom: 20px;
-            max-height: 400px;
-            width: 80%;
+        #messageBoard {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            height: 200px;
             overflow-y: scroll;
-            border: 1px solid #ddd;
+            margin-bottom: 20px;
+            width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #messageInput {
+            width: 300px;
+            height: 40px;
+            margin-bottom: 10px;
+        }
+        #sendMessageButton {
             padding: 10px;
-            background-color: white;
+            width: 100%;
         }
-        input[type="text"] {
-            width: 70%;
-            padding: 10px;
-            font-size: 16px;
-            margin-right: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+        .message {
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
         }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #0056b3;
+        .denied {
+            color: red;
         }
     </style>
-</head>
-<body>
+    <script>
+        let messages = []; // This will hold the messages
 
-    <h1>Global Message Board</h1>
-    <div id="messages"></div>
+        // Function to check if the user is in New York using Geolocation
+        function checkLocation() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const userLatitude = position.coords.latitude;
+                    const userLongitude = position.coords.longitude;
 
-    <input type="text" id="messageInput" placeholder="Type a message..." />
-    <button onclick="sendMessage()">Send</button>
+                    // Coordinates for New York City (approximate)
+                    const nycLatitude = 40.7128;
+                    const nycLongitude = -74.0060;
 
-    <!-- Firebase SDK Script (Modular SDK) -->
-    <script type="module">
-        // Import the required Firebase functions
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+                    // Calculate the distance using the Haversine formula
+                    const distance = getDistance(userLatitude, userLongitude, nycLatitude, nycLongitude);
 
-        // Your Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBcINBgjFh-a6CkD6p2IoQwWFegvgzAFck",
-            authDomain: "global-message-board.firebaseapp.com",
-            databaseURL: "https://global-message-board-default-rtdb.firebaseio.com",
-            projectId: "global-message-board",
-            storageBucket: "global-message-board.firebasestorage.app",
-            messagingSenderId: "411834806885",
-            appId: "1:411834806885:web:48abd6c28c8f6225c74c8c",
-            measurementId: "G-237J40S22R"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app); // Initialize the Realtime Database
-
-        // Get a reference to the messages node in the database
-        const messagesRef = ref(database, 'messages');
-
-        // Display messages in the HTML
-        function displayMessages(message) {
-            const messagesDiv = document.getElementById('messages');
-            const messageElement = document.createElement('p');
-            messageElement.textContent = message;
-            messagesDiv.appendChild(messageElement);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to the bottom
-        }
-
-        // Send a message function
-        function sendMessage() {
-            const messageInput = document.getElementById('messageInput');
-            const messageText = messageInput.value.trim();
-
-            if (messageText) {
-                // Push the message to Firebase
-                push(messagesRef, messageText);
-                messageInput.value = ""; // Clear the input field
+                    if (distance <= 10) {  // Allow access within 10 km range of NYC
+                        startMessageBoard(true);  // User is in NYC and can send messages
+                    } else {
+                        startMessageBoard(false);  // User is not in NYC, they can only view messages
+                    }
+                }, function(error) {
+                    console.error("Geolocation error: ", error);
+                    alert("Unable to get your location. Access Denied.");
+                    document.body.innerHTML = "<h1 class='denied'>Access Denied: Unable to retrieve your location.</h1>";
+                });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+                document.body.innerHTML = "<h1 class='denied'>Access Denied: Geolocation not supported.</h1>";
             }
         }
 
-        // Listen for new messages in real-time
-        onChildAdded(messagesRef, (snapshot) => {
-            const message = snapshot.val();
-            displayMessages(message);
-        });
-    </script>
+        // Function to calculate the distance between two lat/lon coordinates (in kilometers)
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius of the Earth in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distance = R * c; // Distance in kilometers
+            return distance;
+        }
 
+        // Function to start the message board once the location is verified
+        function startMessageBoard(canPostMessages) {
+            document.body.innerHTML = `
+                <h1>Welcome to the New York-Only Message Board!</h1>
+                <div id="messageBoard"></div>
+            `;
+            displayMessages();
+
+            if (canPostMessages) {
+                document.body.innerHTML += `
+                    <textarea id="messageInput" placeholder="Type your message here..."></textarea>
+                    <button id="sendMessageButton">Send Message</button>
+                `;
+                document.getElementById('sendMessageButton').addEventListener('click', sendMessage);
+            } else {
+                document.body.innerHTML += "<p>You are not in New York. You can only view the messages.</p>";
+            }
+        }
+
+        // Function to send a message
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const messageText = messageInput.value.trim();
+            if (messageText) {
+                messages.push(messageText);
+                messageInput.value = ''; // Clear input
+                displayMessages();
+            }
+        }
+
+        // Function to display messages
+        function displayMessages() {
+            const messageBoard = document.getElementById('messageBoard');
+            messageBoard.innerHTML = ''; // Clear current messages
+            messages.forEach((message, index) => {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message');
+                messageDiv.textContent = message;
+                messageBoard.appendChild(messageDiv);
+            });
+        }
+
+        // Start the location check on page load
+        window.onload = checkLocation;
+    </script>
+</head>
+<body>
+    <h1>Loading...</h1>
+    <p>Please wait while we verify your location...</p>
 </body>
 </html>
