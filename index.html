@@ -42,7 +42,7 @@
     <script>
         let messages = []; // This will hold the messages
 
-        // Function to check if the user is in New York using Geolocation
+        // Function to check if the user is in New York using Geolocation or IP-based service
         function checkLocation() {
             if ("geolocation" in navigator) {
                 // Request high accuracy for better location detection
@@ -64,8 +64,8 @@
                     }
                 }, function(error) {
                     console.error("Geolocation error: ", error);
-                    alert("Unable to get your location. Access Denied.");
-                    document.body.innerHTML = "<h1 class='denied'>Access Denied: Unable to retrieve your location.</h1>";
+                    alert("Unable to get your location. Attempting IP-based geolocation.");
+                    ipGeolocationFallback();
                 }, {
                     enableHighAccuracy: true,  // Request high accuracy location
                     timeout: 10000,  // Timeout after 10 seconds
@@ -73,11 +73,11 @@
                 });
             } else {
                 alert("Geolocation is not supported by this browser.");
-                document.body.innerHTML = "<h1 class='denied'>Access Denied: Geolocation not supported.</h1>";
+                ipGeolocationFallback();
             }
         }
 
-        // Function to calculate the distance between two lat/lon coordinates (in kilometers)
+        // Function to get distance between two lat/lon coordinates (in kilometers)
         function getDistance(lat1, lon1, lat2, lon2) {
             const R = 6371; // Radius of the Earth in km
             const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -88,6 +88,28 @@
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             const distance = R * c; // Distance in kilometers
             return distance;
+        }
+
+        // Function to fallback to IP-based geolocation if geolocation fails
+        function ipGeolocationFallback() {
+            // Use IP-based service (e.g., ipinfo.io) to determine the user's location
+            fetch('https://ipinfo.io/json?token=your_api_token')  // Replace 'your_api_token' with your actual token
+                .then(response => response.json())
+                .then(data => {
+                    const city = data.city;
+                    console.log('IP-based location data: ', data);
+
+                    // Check if the user is in New York based on the city
+                    if (city.toLowerCase() === "new york") {
+                        startMessageBoard(true);
+                    } else {
+                        startMessageBoard(false);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error with IP-based geolocation: ", error);
+                    document.body.innerHTML = "<h1 class='denied'>Unable to determine your location. Please ensure you're in New York.</h1>";
+                });
         }
 
         // Function to start the message board once the location is verified
@@ -141,3 +163,4 @@
     <p>Please wait while we verify your location...</p>
 </body>
 </html>
+
