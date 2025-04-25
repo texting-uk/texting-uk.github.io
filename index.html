@@ -42,6 +42,19 @@
     <script>
         let messages = []; // This will hold the messages
 
+        // Load messages from localStorage on page load
+        function loadMessages() {
+            const storedMessages = localStorage.getItem('messages');
+            if (storedMessages) {
+                messages = JSON.parse(storedMessages);
+            }
+        }
+
+        // Save messages to localStorage
+        function saveMessages() {
+            localStorage.setItem('messages', JSON.stringify(messages));
+        }
+
         // Function to check if the user is in New York using Geolocation or IP-based service
         function checkLocation() {
             if ("geolocation" in navigator) {
@@ -139,6 +152,7 @@
             if (messageText) {
                 messages.push(messageText);
                 messageInput.value = ''; // Clear input
+                saveMessages(); // Save messages to localStorage
                 displayMessages();
             }
         }
@@ -156,7 +170,10 @@
         }
 
         // Start the location check on page load
-        window.onload = checkLocation;
+        window.onload = function() {
+            loadMessages(); // Load messages from localStorage
+            checkLocation(); // Check user's location
+        };
     </script>
 </head>
 <body>
