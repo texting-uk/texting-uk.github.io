@@ -56,41 +56,57 @@
     <input type="text" id="messageInput" placeholder="Type a message..." />
     <button onclick="sendMessage()">Send</button>
 
-    <script>
-        // Load existing messages from localStorage
-        function loadMessages() {
-            const messages = JSON.parse(localStorage.getItem('messages')) || [];
+    <!-- Firebase SDK Script (Modular SDK) -->
+    <script type="module">
+        // Import the required Firebase functions
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBcINBgjFh-a6CkD6p2IoQwWFegvgzAFck",
+            authDomain: "global-message-board.firebaseapp.com",
+            databaseURL: "https://global-message-board-default-rtdb.firebaseio.com",
+            projectId: "global-message-board",
+            storageBucket: "global-message-board.firebasestorage.app",
+            messagingSenderId: "411834806885",
+            appId: "1:411834806885:web:48abd6c28c8f6225c74c8c",
+            measurementId: "G-237J40S22R"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app); // Initialize the Realtime Database
+
+        // Get a reference to the messages node in the database
+        const messagesRef = ref(database, 'messages');
+
+        // Display messages in the HTML
+        function displayMessages(message) {
             const messagesDiv = document.getElementById('messages');
-            messagesDiv.innerHTML = '';  // Clear existing messages
-
-            messages.forEach((message) => {
-                const messageElement = document.createElement('p');
-                messageElement.textContent = message;
-                messagesDiv.appendChild(messageElement);
-            });
+            const messageElement = document.createElement('p');
+            messageElement.textContent = message;
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to the bottom
         }
 
-        // Save message to localStorage
-        function saveMessage(message) {
-            const messages = JSON.parse(localStorage.getItem('messages')) || [];
-            messages.push(message);
-            localStorage.setItem('messages', JSON.stringify(messages));
-        }
-
-        // Send message function
+        // Send a message function
         function sendMessage() {
             const messageInput = document.getElementById('messageInput');
             const messageText = messageInput.value.trim();
 
             if (messageText) {
-                saveMessage(messageText);
-                messageInput.value = "";  // Clear input field
-                loadMessages();  // Reload messages
+                // Push the message to Firebase
+                push(messagesRef, messageText);
+                messageInput.value = ""; // Clear the input field
             }
         }
 
-        // Initial load of messages when the page is opened
-        window.onload = loadMessages;
+        // Listen for new messages in real-time
+        onChildAdded(messagesRef, (snapshot) => {
+            const message = snapshot.val();
+            displayMessages(message);
+        });
     </script>
 
 </body>
