@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New York-Only Message Board</title>
+    <title>Message Board</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -39,20 +39,36 @@
             color: red;
         }
     </style>
-    <script>
+    <!-- Firebase SDK (using modular import from v9+) -->
+    <script type="module">
+        // Import the functions you need from the Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getDatabase, ref, onValue, push } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        // Your Firebase configuration (use the provided config)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA4lYhLKBafMXF9XMIG17B7zma--0FG_kM",
+            authDomain: "test-1a173.firebaseapp.com",
+            databaseURL: "https://test-1a173-default-rtdb.firebaseio.com",
+            projectId: "test-1a173",
+            storageBucket: "test-1a173.firebasestorage.app",
+            messagingSenderId: "128692491393",
+            appId: "1:128692491393:web:38877b379f5ff777782980"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
         let messages = []; // This will hold the messages
 
-        // Load messages from localStorage on page load
+        // Load messages from Firebase Realtime Database
         function loadMessages() {
-            const storedMessages = localStorage.getItem('messages');
-            if (storedMessages) {
-                messages = JSON.parse(storedMessages);
-            }
-        }
-
-        // Save messages to localStorage
-        function saveMessages() {
-            localStorage.setItem('messages', JSON.stringify(messages));
+            const messagesRef = ref(database, 'messages');
+            onValue(messagesRef, (snapshot) => {
+                messages = snapshot.val() || [];
+                displayMessages();
+            });
         }
 
         // Function to check if the user is in New York using Geolocation or IP-based service
@@ -132,7 +148,7 @@
                 <h1>Welcome to the New York-Only Message Board!</h1>
                 <div id="messageBoard"></div>
             `;
-            displayMessages();
+            loadMessages(); // Load messages from Firebase
 
             if (canPostMessages) {
                 document.body.innerHTML += `
@@ -145,19 +161,18 @@
             }
         }
 
-        // Function to send a message
+        // Function to send a message to Firebase
         function sendMessage() {
             const messageInput = document.getElementById('messageInput');
             const messageText = messageInput.value.trim();
             if (messageText) {
-                messages.push(messageText);
+                const messagesRef = ref(database, 'messages');
+                push(messagesRef, messageText);  // Push the message to Firebase
                 messageInput.value = ''; // Clear input
-                saveMessages(); // Save messages to localStorage
-                displayMessages();
             }
         }
 
-        // Function to display messages
+        // Function to display messages from Firebase
         function displayMessages() {
             const messageBoard = document.getElementById('messageBoard');
             messageBoard.innerHTML = ''; // Clear current messages
@@ -170,10 +185,7 @@
         }
 
         // Start the location check on page load
-        window.onload = function() {
-            loadMessages(); // Load messages from localStorage
-            checkLocation(); // Check user's location
-        };
+        window.onload = checkLocation;
     </script>
 </head>
 <body>
