@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Message Board</title>
+    <title>New York-Only Message Board</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -45,6 +45,7 @@
         // Function to check if the user is in New York using Geolocation
         function checkLocation() {
             if ("geolocation" in navigator) {
+                // Request high accuracy for better location detection
                 navigator.geolocation.getCurrentPosition(function(position) {
                     const userLatitude = position.coords.latitude;
                     const userLongitude = position.coords.longitude;
@@ -56,7 +57,7 @@
                     // Calculate the distance using the Haversine formula
                     const distance = getDistance(userLatitude, userLongitude, nycLatitude, nycLongitude);
 
-                    if (distance <= 10) {  // Allow access within 10 km range of NYC
+                    if (distance <= 20) {  // Allow access within 20 km range of NYC (increased radius)
                         startMessageBoard(true);  // User is in NYC and can send messages
                     } else {
                         startMessageBoard(false);  // User is not in NYC, they can only view messages
@@ -65,6 +66,10 @@
                     console.error("Geolocation error: ", error);
                     alert("Unable to get your location. Access Denied.");
                     document.body.innerHTML = "<h1 class='denied'>Access Denied: Unable to retrieve your location.</h1>";
+                }, {
+                    enableHighAccuracy: true,  // Request high accuracy location
+                    timeout: 10000,  // Timeout after 10 seconds
+                    maximumAge: 0  // Don't use cached location
                 });
             } else {
                 alert("Geolocation is not supported by this browser.");
