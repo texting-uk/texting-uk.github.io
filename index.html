@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Message Board</title>
+    <title>New York-Only Message Board</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -45,7 +45,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getDatabase, ref, onValue, push } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-        // Your Firebase configuration (use the provided config)
+        // Your Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA4lYhLKBafMXF9XMIG17B7zma--0FG_kM",
             authDomain: "test-1a173.firebaseapp.com",
@@ -71,7 +71,7 @@
             });
         }
 
-        // Function to check if the user is in New York using Geolocation or IP-based service
+        // Function to check if the user is in New York using Geolocation
         function checkLocation() {
             if ("geolocation" in navigator) {
                 // Request high accuracy for better location detection
@@ -83,10 +83,9 @@
                     const nycLatitude = 40.7128;
                     const nycLongitude = -74.0060;
 
-                    // Calculate the distance using the Haversine formula
+                    // Allow access if within 50 km range of New York City
                     const distance = getDistance(userLatitude, userLongitude, nycLatitude, nycLongitude);
-
-                    if (distance <= 20) {  // Allow access within 20 km range of NYC (increased radius)
+                    if (distance <= 50) {  // Increased range to 50 km
                         startMessageBoard(true);  // User is in NYC and can send messages
                     } else {
                         startMessageBoard(false);  // User is not in NYC, they can only view messages
